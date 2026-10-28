@@ -23,9 +23,14 @@ def test_confidence_is_clamped():
 
 
 def test_unknown_intent_becomes_other():
-    result = validate_proposal({"category": "idea", "intent": "dance"})
+    # Use a category with no repair rule, so "other" is preserved.
+    result = validate_proposal({"category": "task", "intent": "dance"})
     assert result["intent"] == "other"
 
+
+def test_unknown_intent_on_idea_is_repaired():
+    result = validate_proposal({"category": "idea", "intent": "dance"})
+    assert result["intent"] == "record_idea"
 
 def test_mock_output_passes_validation():
     proposal = MockLLMAdapter().analyze("Remind me to call Ravi")

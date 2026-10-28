@@ -12,9 +12,12 @@ CREATE TABLE IF NOT EXISTS fragments (
     note_id     INTEGER NOT NULL REFERENCES notes(id),
     category    TEXT,
     intent      TEXT,
+    summary     TEXT,
     slots_json  TEXT,
     embedding   BLOB,
-    stability   TEXT NOT NULL DEFAULT 'pending' CHECK (stability IN ('pending', 'stable')),
+    stability   TEXT NOT NULL DEFAULT 'pending'
+                CHECK (stability IN ('pending', 'stable', 'absorbed')),
+    merged_into INTEGER REFERENCES fragments(id),
     confidence  REAL,
     created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -3,7 +3,7 @@ import re
 
 from core.database import get_connection
 from core.embeddings import cosine, from_blob, to_blob
-from core.intents import SLOT_NAMES
+from core.intents import SLOT_NAMES, same_family
 
 HIGH = 0.75   # at or above: same knowledge (fuse automatically)
 LOW = 0.50    # below: unrelated (new item); in between: ask the user
@@ -81,7 +81,7 @@ def fuse_fragment(fragment_id: int) -> dict:
         for row in conn.execute("SELECT id, category, content_json, embedding FROM knowledge "
                                 "WHERE status = 'active' AND embedding IS NOT NULL").fetchall():
             content = json.loads(row["content_json"])
-            if row["category"] != frag["category"] or content.get("intent") != frag["intent"]:
+            if not same_family(content.get("intent"), frag["intent"]):
                 continue                      # similarity alone doesn't prove same topic
             score = cosine(vec, from_blob(row["embedding"]))
             if best is None or score > best[0]:
@@ -98,7 +98,7 @@ def fuse_fragment(fragment_id: int) -> dict:
         if score >= HIGH:
             if _conflicts(content["slots"], slots):
                 return {"decision": "conflict", "knowledge_id": kid, "similarity": sim,
-                        "reason": "slot values differ (lifecycle manager decides, Day 7)"}
+                        "reason": "slot values differ (lifecycle manager decides)"}
             _attach(conn, kid, frag, vec, slots)
             return {"decision": "fused", "knowledge_id": kid, "similarity": sim}
 

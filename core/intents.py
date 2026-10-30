@@ -1,7 +1,7 @@
 CATEGORIES = ["task", "reminder", "idea", "journal"]
 SLOT_NAMES = ["who", "what", "when", "where"]
 
-# Level 2 (intent) -> Level 3 (required slots). Day 5 uses this to decide "stable".
+# Level 2 (intent) -> Level 3 (required slots). Stabilization uses this to decide "stable".
 REQUIRED_SLOTS = {
     "call_person": ["who", "when"],
     "schedule_meeting": ["who", "when"],
@@ -11,7 +11,22 @@ REQUIRED_SLOTS = {
     "other": [],
 }
 
+# Intents that describe the same kind of knowledge. Small models switch between
+# these for the same real-world item, so fusion compares families, not exact labels.
+INTENT_FAMILY = {
+    "call_person": "contact",
+    "schedule_meeting": "contact",
+    "buy_item": "buy_item",
+    "record_idea": "record_idea",
+    "journal_entry": "journal_entry",
+    "other": "other",
+}
+
 _EMPTY_VALUES = {"", "null", "none", "unknown", "n/a", "not specified"}
+
+
+def same_family(a, b) -> bool:
+    return INTENT_FAMILY.get(a, a) == INTENT_FAMILY.get(b, b)
 
 
 def validate_proposal(raw) -> dict:
@@ -33,9 +48,6 @@ def validate_proposal(raw) -> dict:
             intent = "record_idea"
         elif category == "journal":
             intent = "journal_entry"
-
-    raw_slots = raw.get("slots")
-        
 
     raw_slots = raw.get("slots")
     if not isinstance(raw_slots, dict):

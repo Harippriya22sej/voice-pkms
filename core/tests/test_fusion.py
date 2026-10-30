@@ -110,6 +110,7 @@ def test_rejecting_review_creates_separate_item():
     assert resolve_fuse_review(1, accept=False)["decision"] == "new"
     assert count("knowledge") == 2
 
+
 def test_more_detailed_value_is_a_refinement_not_a_conflict():
     fuse_fragment(add_fragment(when="Friday"))
     r = fuse_fragment(add_fragment(vec=V_SIMILAR, when="Friday at 5"))
@@ -117,3 +118,9 @@ def test_more_detailed_value_is_a_refinement_not_a_conflict():
     with database.get_connection() as conn:
         content = json.loads(conn.execute("SELECT content_json FROM knowledge").fetchone()[0])
     assert content["slots"]["when"] == "Friday at 5"
+
+
+def test_related_intents_are_compared():
+    fuse_fragment(add_fragment(when="Friday"))
+    r = fuse_fragment(add_fragment(vec=V_SIMILAR, intent="schedule_meeting", when="Monday"))
+    assert r["decision"] == "conflict"

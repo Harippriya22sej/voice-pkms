@@ -1,7 +1,10 @@
-# --- top of file ---
 import json
+
 import ollama
+
 from core.intents import CATEGORIES, REQUIRED_SLOTS, validate_proposal
+
+
 class LLMAdapter:
     """Interface every LLM backend must follow."""
 
@@ -39,7 +42,8 @@ class MockLLMAdapter(LLMAdapter):
             "missing": missing,
             "confidence": 0.9 if not missing else 0.6,
         }
-# --- end of file ---
+
+
 SYSTEM_PROMPT = f"""You analyze short personal voice notes.
 Return ONLY a JSON object with these keys:
 - category: one of {CATEGORIES}
@@ -47,7 +51,29 @@ Return ONLY a JSON object with these keys:
 - summary: one short sentence
 - slots: object with keys who, what, when, where. Use null for anything not stated.
 - confidence: number from 0 to 1
-Never invent details that are not in the note."""
+
+Intent meanings:
+- call_person: a call or phone conversation with a specific person, including changing or moving such a call
+- schedule_meeting: a meeting or appointment with someone, including changing or moving it
+- buy_item: purchasing or getting something
+- record_idea: a thought, suggestion, or idea to remember
+- journal_entry: feelings or events from the user's day
+- other: only if none of the above fit
+
+Rules: never invent details that are not in the note. If a person or time is not stated, use null.
+
+Examples:
+Note: "Call Mom tomorrow evening."
+{{"category":"reminder","intent":"call_person","summary":"Call Mom tomorrow evening","slots":{{"who":"Mom","what":null,"when":"tomorrow evening","where":null}},"confidence":0.9}}
+
+Note: "We should add dark mode to the app."
+{{"category":"idea","intent":"record_idea","summary":"Add dark mode to the app","slots":{{"who":null,"what":"dark mode","when":null,"where":null}},"confidence":0.9}}
+
+Note: "Remind me to call the bank."
+{{"category":"reminder","intent":"call_person","summary":"Call the bank","slots":{{"who":"the bank","what":null,"when":null,"where":null}},"confidence":0.9}}
+
+Note: "Actually, move the call with Sam to Thursday."
+{{"category":"reminder","intent":"call_person","summary":"Call with Sam moved to Thursday","slots":{{"who":"Sam","what":null,"when":"Thursday","where":null}},"confidence":0.9}}"""
 
 OUTPUT_SCHEMA = {
     "type": "object",

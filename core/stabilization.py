@@ -2,7 +2,7 @@ import json
 
 from core.database import get_connection
 from core.embeddings import cosine, from_blob, to_blob
-from core.intents import REQUIRED_SLOTS, SLOT_NAMES
+from core.intents import REQUIRED_SLOTS, SLOT_NAMES, same_family
 
 FILL_THRESHOLD = 0.45   # starting guess; tune it with your own notes
 MIN_CONFIDENCE = 0.1    # below this the model call failed (adapter fallback)
@@ -35,12 +35,12 @@ def _find_fill_target(conn, proposal: dict, vec):
         "WHERE stability = 'pending' AND embedding IS NOT NULL"
     ).fetchall()
     for row in rows:
-        # Compatible intent: same, or the new fragment is a vague "other".
-        if row["intent"] != proposal["intent"] and proposal["intent"] != "other":
+        # Compatible intent: same family, or the new fragment is a vague "other".
+        if not same_family(row["intent"], proposal["intent"]) and proposal["intent"] != "other":
             continue
         old_slots = json.loads(row["slots_json"] or "{}")
 
-        # A direct disagreement is not slot-filling (Day 7 handles conflicts).
+        # A direct disagreement is not slot-filling (the lifecycle manager handles conflicts).
         if any(old_slots.get(k) and new_slots.get(k) and not _same(old_slots[k], new_slots[k])
                for k in SLOT_NAMES):
             continue
@@ -107,7 +107,7 @@ def confirm_fragment(fragment_id: int) -> bool:
 
 
 def find_stale_pending(hours: int = 24) -> list:
-    """Pending fragments older than N hours (Day 10 sends these to the review queue)."""
+    """Pending fragments older than N hours (later sent to the review queue)."""
     with get_connection() as conn:
         rows = conn.execute(
             "SELECT id, note_id, intent, slots_json, created_at FROM fragments "

@@ -7,13 +7,22 @@ from core.llm_adapter import OllamaLLMAdapter
 from core.stabilization import stabilize
 
 
+def integrate_fragment(fragment_id: int, judge=None):
+    """Put one stable fragment into the knowledge base (fusion, then lifecycle)."""
+    fusion = fuse_fragment(fragment_id)
+    lifecycle = None
+    if fusion["decision"] == "conflict":
+        lifecycle = resolve_conflict(fragment_id, fusion["knowledge_id"],
+                                     judge=judge or OllamaLifecycleJudge())
+    return fusion, lifecycle
+
+
 def process_text_note(text: str, llm=None, judge=None) -> dict:
     init_db()
     text = text.strip()
     if not text:
         raise ValueError("Empty note.")
     llm = llm or OllamaLLMAdapter()
-    judge = judge or OllamaLifecycleJudge()
 
     # Save the original first, so it is never lost if analysis fails.
     with get_connection() as conn:
@@ -21,21 +30,24 @@ def process_text_note(text: str, llm=None, judge=None) -> dict:
             "INSERT INTO notes (text, source) VALUES (?, 'text')", (text,)
         ).lastrowid
 
-    proposal = validate_proposal(llm.analyze(text))   # model output is untrusted
-    result = stabilize(note_id, proposal, embed(text))
+    try:
+        proposal = validate_proposal(llm.analyze(text))   # model output is untrusted
+        result = stabilize(note_id, proposal, embed(text))
 
-    # Fuse when this note produced (or completed) a stable fragment.
-    target_id = None
-    if result["stability"] == "stable":
-        target_id = result["fragment_id"]
-    elif result["stability"] == "absorbed" and result["target_stability"] == "stable":
-        target_id = result["merged_into"]
-    fusion = fuse_fragment(target_id) if target_id else None
+        # A stable fragment (or a pending one this note just completed) goes to knowledge.
+        target_id = None
+        if result["stability"] == "stable":
+            target_id = result["fragment_id"]
+        elif result["stability"] == "absorbed" and result["target_stability"] == "stable":
+            target_id = result["merged_into"]
 
-    # Conflicts go to the lifecycle manager.
-    lifecycle = None
-    if fusion and fusion["decision"] == "conflict":
-        lifecycle = resolve_conflict(target_id, fusion["knowledge_id"], judge=judge)
+        fusion = lifecycle = None
+        if target_id:
+            fusion, lifecycle = integrate_fragment(target_id, judge)
+    except Exception:
+        with get_connection() as conn:
+            conn.execute("UPDATE notes SET status = 'failed' WHERE id = ?", (note_id,))
+        raise
 
     with get_connection() as conn:
         conn.execute("UPDATE notes SET status = 'processed' WHERE id = ?", (note_id,))

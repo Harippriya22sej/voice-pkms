@@ -1,18 +1,25 @@
+import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from core import queries
-from core.database import get_connection, init_db
+from core import queries, retrieval
+from core.database import BASE_DIR, get_connection, init_db
 from core.fusion import resolve_fuse_review
 from core.lifecycle import OllamaLifecycleJudge, resolve_contradiction_review
 from core.llm_adapter import OllamaLLMAdapter
 from core.pipeline import integrate_fragment, process_text_note
+from core.speech import FasterWhisperAdapter
 from core.stabilization import confirm_fragment
 
+AUDIO_DIR = BASE_DIR / "data" / "audio"
+ALLOWED_AUDIO = {".wav", ".mp3", ".m4a", ".webm", ".ogg", ".flac"}
+MAX_AUDIO_BYTES = 25 * 1024 * 1024
+
 # Created lazily; tests replace these with fakes.
-state = {"llm": None, "judge": None}
+state = {"llm": None, "judge": None, "speech": None}
 
 
 def get_llm():
@@ -25,6 +32,12 @@ def get_judge():
     if state["judge"] is None:
         state["judge"] = OllamaLifecycleJudge()
     return state["judge"]
+
+
+def get_speech():
+    if state["speech"] is None:
+        state["speech"] = FasterWhisperAdapter("base")
+    return state["speech"]
 
 
 @asynccontextmanager
@@ -60,6 +73,58 @@ def create_text_note(note: TextNote):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         raise HTTPException(status_code=503, detail=PROCESSING_ERROR)
+
+
+@app.post("/notes/voice")
+def create_voice_note(file: UploadFile = File(...)):
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_AUDIO:
+        raise HTTPException(status_code=415,
+                            detail="Unsupported file type. Use: " + ", ".join(sorted(ALLOWED_AUDIO)))
+
+    AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    path = AUDIO_DIR / f"{uuid.uuid4().hex}{ext}"   # never trust the uploaded file name
+    size, too_large = 0, False
+    with open(path, "wb") as out:
+        while True:
+            chunk = file.file.read(1024 * 1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_AUDIO_BYTES:
+                too_large = True
+                break
+            out.write(chunk)
+    if too_large or size == 0:
+        path.unlink(missing_ok=True)
+        if too_large:
+            raise HTTPException(status_code=413, detail="Audio file is too large.")
+        raise HTTPException(status_code=400, detail="Audio file is empty.")
+
+    try:
+        transcript = get_speech().transcribe(path)
+    except Exception:
+        raise HTTPException(status_code=503,
+                            detail="Transcription failed. The audio was saved; please try again.")
+    if not transcript:
+        raise HTTPException(status_code=422, detail="No speech detected in the recording.")
+
+    try:
+        result = process_text_note(transcript, llm=get_llm(), judge=get_judge(),
+                                   source="voice", audio_path=str(path))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=503, detail=PROCESSING_ERROR)
+    return {"transcript": transcript, **result}
+
+
+@app.get("/search")
+def search(q: str, limit: int = 5, include_old: bool = False):
+    try:
+        return retrieval.search(q, limit=limit, include_superseded=include_old)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/notes")

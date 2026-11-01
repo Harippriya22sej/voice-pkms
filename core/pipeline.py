@@ -17,7 +17,8 @@ def integrate_fragment(fragment_id: int, judge=None):
     return fusion, lifecycle
 
 
-def process_text_note(text: str, llm=None, judge=None) -> dict:
+def process_text_note(text: str, llm=None, judge=None,
+                      source: str = "text", audio_path: str | None = None) -> dict:
     init_db()
     text = text.strip()
     if not text:
@@ -27,7 +28,8 @@ def process_text_note(text: str, llm=None, judge=None) -> dict:
     # Save the original first, so it is never lost if analysis fails.
     with get_connection() as conn:
         note_id = conn.execute(
-            "INSERT INTO notes (text, source) VALUES (?, 'text')", (text,)
+            "INSERT INTO notes (text, source, audio_path) VALUES (?, ?, ?)",
+            (text, source, audio_path),
         ).lastrowid
 
     try:

@@ -3,7 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core import app as app_module
-from core import database, pipeline
+from core import database, pipeline, retrieval
 
 
 class FakeLLM:
@@ -26,6 +26,14 @@ class FakeJudge:
         return "CONTRADICT"
 
 
+class FakeSpeech:
+    def __init__(self, text="Call Ravi on Friday."):
+        self.text = text
+
+    def transcribe(self, audio_path):
+        return self.text
+
+
 def fake_embed(text):
     return np.array([1, 0, 0] if "ravi" in text.lower() else [0, 1, 0], dtype=np.float32)
 
@@ -33,15 +41,22 @@ def fake_embed(text):
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setattr(app_module, "AUDIO_DIR", tmp_path / "audio")
     monkeypatch.setattr(pipeline, "embed", fake_embed)
+    monkeypatch.setattr(retrieval, "embed", fake_embed)
     monkeypatch.setitem(app_module.state, "llm", FakeLLM())
     monkeypatch.setitem(app_module.state, "judge", FakeJudge())
+    monkeypatch.setitem(app_module.state, "speech", FakeSpeech())
     with TestClient(app_module.app) as c:
         yield c
 
 
 def post(client, text):
     return client.post("/notes/text", json={"text": text})
+
+
+def upload(client, name="memo.wav", data=b"fake audio bytes"):
+    return client.post("/notes/voice", files={"file": (name, data, "audio/wav")})
 
 
 def test_health(client):
@@ -131,3 +146,40 @@ def test_confirming_a_pending_fragment_adds_it_to_knowledge(client):
     assert client.get("/pending").json() == []
     assert len(client.get("/knowledge").json()) == 1
     assert client.post(f"/pending/{fragment_id}/confirm").status_code == 404
+
+
+def test_voice_note_runs_the_full_pipeline(client):
+    r = upload(client)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["transcript"] == "Call Ravi on Friday."
+    assert body["stability"] == "stable"
+    assert client.get(f"/notes/{body['note_id']}").json()["source"] == "voice"
+    assert len(list(app_module.AUDIO_DIR.iterdir())) == 1
+    assert len(client.get("/knowledge").json()) == 1
+
+
+def test_voice_rejects_unsupported_file_type(client):
+    assert upload(client, name="notes.txt").status_code == 415
+
+
+def test_voice_rejects_empty_file(client):
+    assert upload(client, data=b"").status_code == 400
+
+
+def test_voice_rejects_oversized_file(client, monkeypatch):
+    monkeypatch.setattr(app_module, "MAX_AUDIO_BYTES", 10)
+    assert upload(client, data=b"x" * 100).status_code == 413
+    assert list(app_module.AUDIO_DIR.iterdir()) == []   # partial file removed
+
+
+def test_voice_with_no_speech_returns_422(client, monkeypatch):
+    monkeypatch.setitem(app_module.state, "speech", FakeSpeech(""))
+    assert upload(client).status_code == 422
+
+
+def test_search_endpoint_returns_matching_knowledge(client):
+    post(client, "Call Ravi on Friday.")
+    results = client.get("/search", params={"q": "Ravi call"}).json()
+    assert len(results) == 1 and results[0]["slots"]["when"] == "Friday"
+    assert client.get("/search", params={"q": "   "}).status_code == 400

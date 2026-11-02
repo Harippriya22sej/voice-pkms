@@ -1,4 +1,5 @@
 import pytest
+
 from core.intents import validate_proposal
 from core.llm_adapter import MockLLMAdapter
 
@@ -32,10 +33,20 @@ def test_unknown_intent_on_idea_is_repaired():
     result = validate_proposal({"category": "idea", "intent": "dance"})
     assert result["intent"] == "record_idea"
 
-def test_mock_output_passes_validation():
-    proposal = MockLLMAdapter().analyze("Remind me to call Ravi")
-    assert validate_proposal(proposal)["missing"] == ["when"]
 
 def test_idea_with_other_intent_is_repaired():
     result = validate_proposal({"category": "idea", "intent": "other"})
     assert result["intent"] == "record_idea"
+
+
+def test_mock_output_passes_validation():
+    proposal = MockLLMAdapter().analyze("Remind me to call Ravi")
+    assert validate_proposal(proposal)["missing"] == ["when"]
+
+
+def test_do_task_needs_only_what():
+    complete = validate_proposal({"category": "task", "intent": "do_task",
+                                  "slots": {"what": "lab record"}})
+    assert complete["missing"] == []
+    incomplete = validate_proposal({"category": "task", "intent": "do_task", "slots": {}})
+    assert incomplete["missing"] == ["what"]

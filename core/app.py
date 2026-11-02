@@ -8,8 +8,10 @@ from pydantic import BaseModel, Field
 from core import queries, retrieval
 from core.database import BASE_DIR, get_connection, init_db
 from core.fusion import resolve_fuse_review
+from core.intents import CATEGORIES
 from core.lifecycle import OllamaLifecycleJudge, resolve_contradiction_review
 from core.llm_adapter import OllamaLLMAdapter
+from core.maintenance import STALE_HOURS, queue_stale_pending, resolve_stale_review
 from core.pipeline import integrate_fragment, process_text_note
 from core.speech import FasterWhisperAdapter
 from core.stabilization import confirm_fragment
@@ -43,6 +45,7 @@ def get_speech():
 @asynccontextmanager
 async def lifespan(app):
     init_db()
+    queue_stale_pending(STALE_HOURS)     # old pending notes become review questions
     yield
 
 
@@ -63,6 +66,20 @@ class ReviewResolution(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/stats")
+def stats():
+    with get_connection() as conn:
+        def n(sql):
+            return conn.execute(sql).fetchone()[0]
+        return {
+            "notes": n("SELECT COUNT(*) FROM notes"),
+            "pending_fragments": n("SELECT COUNT(*) FROM fragments WHERE stability = 'pending'"),
+            "active_knowledge": n("SELECT COUNT(*) FROM knowledge WHERE status = 'active'"),
+            "superseded_knowledge": n("SELECT COUNT(*) FROM knowledge WHERE status = 'superseded'"),
+            "pending_reviews": n("SELECT COUNT(*) FROM review_queue WHERE status = 'pending'"),
+        }
 
 
 @app.post("/notes/text")
@@ -164,11 +181,21 @@ def confirm_pending(fragment_id: int):
     return {"fragment_id": fragment_id, "fusion": fusion, "lifecycle": lifecycle}
 
 
+@app.post("/maintenance/stale-check")
+def stale_check(hours: int = STALE_HOURS):
+    if not 0 <= hours <= 720:
+        raise HTTPException(status_code=400, detail="hours must be between 0 and 720")
+    return {"queued": queue_stale_pending(hours)}
+
+
 @app.get("/knowledge")
-def knowledge(status: str = "active", limit: int = 50):
+def knowledge(status: str = "active", limit: int = 50, category: str | None = None):
     if status not in ("active", "superseded", "all"):
         raise HTTPException(status_code=400, detail="status must be active, superseded or all")
-    return queries.list_knowledge(status, limit)
+    if category is not None and category not in CATEGORIES:
+        raise HTTPException(status_code=400,
+                            detail="category must be one of: " + ", ".join(CATEGORIES))
+    return queries.list_knowledge(status, limit, category)
 
 
 @app.get("/knowledge/{knowledge_id}")
@@ -201,6 +228,16 @@ def resolve_review(review_id: int, body: ReviewResolution):
             return resolve_fuse_review(review_id, body.action == "accept")
         if item["type"] == "contradict":
             return resolve_contradiction_review(review_id, body.action)
+        if item["type"] == "stabilize":
+            result = resolve_stale_review(review_id, body.action)
+            if body.action == "confirm":
+                try:
+                    fusion, lifecycle = integrate_fragment(result["fragment_id"],
+                                                           judge=get_judge())
+                except Exception:
+                    raise HTTPException(status_code=503, detail=PROCESSING_ERROR)
+                result.update({"fusion": fusion, "lifecycle": lifecycle})
+            return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     raise HTTPException(status_code=400, detail="Unsupported review type.")

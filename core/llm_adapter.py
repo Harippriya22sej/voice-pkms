@@ -56,11 +56,12 @@ Intent meanings:
 - call_person: a call or phone conversation with a specific person, including changing or moving such a call
 - schedule_meeting: a meeting or appointment with someone, including changing or moving it
 - buy_item: purchasing or getting something
+- do_task: work or a chore the user must do or finish (writing, studying, cleaning, submitting, finishing something). The thing to do goes in "what". It does NOT need a person.
 - record_idea: a thought, suggestion, or idea to remember
 - journal_entry: feelings or events from the user's day
 - other: only if none of the above fit
 
-Rules: never invent details that are not in the note. If a person or time is not stated, use null.
+Rules: never invent details that are not in the note. If a person or time is not stated, use null. Only use call_person or schedule_meeting when the note mentions calling, phoning, meeting, or an appointment.
 
 Examples:
 Note: "Call Mom tomorrow evening."
@@ -73,7 +74,13 @@ Note: "Remind me to call the bank."
 {{"category":"reminder","intent":"call_person","summary":"Call the bank","slots":{{"who":"the bank","what":null,"when":null,"where":null}},"confidence":0.9}}
 
 Note: "Actually, move the call with Sam to Thursday."
-{{"category":"reminder","intent":"call_person","summary":"Call with Sam moved to Thursday","slots":{{"who":"Sam","what":null,"when":"Thursday","where":null}},"confidence":0.9}}"""
+{{"category":"reminder","intent":"call_person","summary":"Call with Sam moved to Thursday","slots":{{"who":"Sam","what":null,"when":"Thursday","where":null}},"confidence":0.9}}
+
+Note: "I have to finish the lab record by Sunday."
+{{"category":"task","intent":"do_task","summary":"Finish the lab record by Sunday","slots":{{"who":null,"what":"lab record","when":"Sunday","where":null}},"confidence":0.9}}
+
+Note: "I need to clean my room."
+{{"category":"task","intent":"do_task","summary":"Clean the room","slots":{{"who":null,"what":"clean the room","when":null,"where":null}},"confidence":0.9}}"""
 
 OUTPUT_SCHEMA = {
     "type": "object",

@@ -29,15 +29,22 @@ def list_pending() -> list:
     return out
 
 
-def list_knowledge(status: str = "active", limit: int = 50) -> list:
+def list_knowledge(status: str = "active", limit: int = 50, category: str | None = None) -> list:
     limit = max(1, min(limit, 200))
+    sql = "SELECT * FROM knowledge"
+    clauses, params = [], []
+    if status != "all":
+        clauses.append("status = ?")
+        params.append(status)
+    if category:
+        clauses.append("category = ?")
+        params.append(category)
+    if clauses:
+        sql += " WHERE " + " AND ".join(clauses)
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
     with get_connection() as conn:
-        if status == "all":
-            rows = conn.execute("SELECT * FROM knowledge ORDER BY id DESC LIMIT ?",
-                                (limit,)).fetchall()
-        else:
-            rows = conn.execute("SELECT * FROM knowledge WHERE status = ? ORDER BY id DESC LIMIT ?",
-                                (status, limit)).fetchall()
+        rows = conn.execute(sql, params).fetchall()
     return [_knowledge_dict(r) for r in rows]
 
 

@@ -59,6 +59,11 @@ def upload(client, name="memo.wav", data=b"fake audio bytes"):
     return client.post("/notes/voice", files={"file": (name, data, "audio/wav")})
 
 
+def age_all_fragments():
+    with database.get_connection() as conn:
+        conn.execute("UPDATE fragments SET created_at = '2000-01-01 00:00:00'")
+
+
 def test_health(client):
     assert client.get("/health").json() == {"status": "ok"}
 
@@ -183,3 +188,61 @@ def test_search_endpoint_returns_matching_knowledge(client):
     results = client.get("/search", params={"q": "Ravi call"}).json()
     assert len(results) == 1 and results[0]["slots"]["when"] == "Friday"
     assert client.get("/search", params={"q": "   "}).status_code == 400
+
+
+def test_category_filter(client):
+    post(client, "Call Ravi on Friday.")                  # the fake LLM labels it "reminder"
+    assert len(client.get("/knowledge", params={"category": "reminder"}).json()) == 1
+    assert client.get("/knowledge", params={"category": "task"}).json() == []
+    assert client.get("/knowledge", params={"category": "bogus"}).status_code == 400
+
+
+def test_stats_counts(client):
+    post(client, "Call Ravi on Friday.")
+    post(client, "Remind me to call Ravi.")
+    assert client.get("/stats").json() == {
+        "notes": 2, "pending_fragments": 1, "active_knowledge": 1,
+        "superseded_knowledge": 0, "pending_reviews": 0}
+
+
+def test_stale_pending_is_queued_and_can_be_confirmed(client):
+    post(client, "Remind me to call Ravi.")
+    age_all_fragments()
+    assert client.post("/maintenance/stale-check", params={"hours": 24}).json() == {"queued": 1}
+
+    queue = client.get("/review").json()
+    assert len(queue) == 1 and queue[0]["type"] == "stabilize"
+    assert queue[0]["context"]["new_note"] == "Remind me to call Ravi."
+
+    res = client.post(f"/review/{queue[0]['id']}/resolve", json={"action": "confirm"})
+    assert res.status_code == 200
+    assert client.get("/pending").json() == []
+    assert len(client.get("/knowledge").json()) == 1
+
+
+def test_keep_waiting_restarts_the_clock(client):
+    post(client, "Remind me to call Ravi.")
+    age_all_fragments()
+    client.post("/maintenance/stale-check", params={"hours": 24})
+    review_id = client.get("/review").json()[0]["id"]
+
+    res = client.post(f"/review/{review_id}/resolve", json={"action": "keep_waiting"})
+    assert res.status_code == 200
+    assert len(client.get("/pending").json()) == 1
+    assert client.post("/maintenance/stale-check", params={"hours": 24}).json() == {"queued": 0}
+
+
+def test_stale_check_never_queues_the_same_question_twice(client):
+    post(client, "Remind me to call Ravi.")
+    age_all_fragments()
+    assert client.post("/maintenance/stale-check", params={"hours": 24}).json() == {"queued": 1}
+    assert client.post("/maintenance/stale-check", params={"hours": 24}).json() == {"queued": 0}
+    assert len(client.get("/review").json()) == 1
+
+
+def test_stale_review_rejects_unknown_action(client):
+    post(client, "Remind me to call Ravi.")
+    age_all_fragments()
+    client.post("/maintenance/stale-check", params={"hours": 24})
+    review_id = client.get("/review").json()[0]["id"]
+    assert client.post(f"/review/{review_id}/resolve", json={"action": "bogus"}).status_code == 400

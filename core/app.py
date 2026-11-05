@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from core import queries, retrieval
@@ -19,6 +20,7 @@ from core.stabilization import confirm_fragment
 AUDIO_DIR = BASE_DIR / "data" / "audio"
 ALLOWED_AUDIO = {".wav", ".mp3", ".m4a", ".webm", ".ogg", ".flac"}
 MAX_AUDIO_BYTES = 25 * 1024 * 1024
+UI_FILE = BASE_DIR / "ui" / "index.html"
 
 # Created lazily; tests replace these with fakes.
 state = {"llm": None, "judge": None, "speech": None}
@@ -66,6 +68,13 @@ class ReviewResolution(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    if not UI_FILE.exists():
+        raise HTTPException(status_code=404, detail="ui/index.html not found.")
+    return FileResponse(UI_FILE)
 
 
 @app.get("/stats")

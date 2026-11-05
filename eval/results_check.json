@@ -1,0 +1,57 @@
+[
+  {
+    "id": 2,
+    "title": "Meeting moved with explicit change wording",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Meet Anita on Wednesday at the library.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Anita",
+          "what": null,
+          "when": "Wednesday",
+          "where": "the library"
+        },
+        "seconds": 6.6
+      },
+      {
+        "text": "Actually, move the meeting with Anita to Thursday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "update",
+        "outcome_ok": true,
+        "similarity": 0.675,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Anita",
+          "what": null,
+          "when": "Thursday",
+          "where": null
+        },
+        "seconds": 4.6
+      }
+    ],
+    "query": {
+      "text": "when is my meeting with Anita?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": false,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  }
+]

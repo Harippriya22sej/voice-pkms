@@ -1,0 +1,82 @@
+[
+  {
+    "id": 101, "title": "Pending call completed by a later note", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Remind me to phone Lakshmi about the fee.", "expect_stability": "pending", "expect_outcome": null},
+      {"text": "The call with Lakshmi is on Thursday at 10.", "expect_stability": "absorbed", "expect_outcome": "new"}
+    ],
+    "query": "when do I call Lakshmi?", "current": "thursday", "stale": []
+  },
+  {
+    "id": 102, "title": "Meeting postponed (change wording: postponed)", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Meet Arjun on Monday at the canteen.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "The meeting with Arjun is postponed to Wednesday.", "expect_stability": "stable", "expect_outcome": "update"}
+    ],
+    "query": "when do I meet Arjun?", "current": "wednesday", "stale": ["monday"]
+  },
+  {
+    "id": 103, "title": "Different deadline without change wording goes to review", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Submit the lab record on Tuesday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Submit the lab record on Friday.", "expect_stability": "stable", "expect_outcome": "contradict"}
+    ],
+    "query": null, "current": null, "stale": []
+  },
+  {
+    "id": 104, "title": "More detailed purchase is a refinement", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Buy a notebook.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Buy a ruled notebook from the stationery shop.", "expect_stability": "stable", "expect_outcome": "fused"}
+    ],
+    "query": "what notebook do I buy?", "current": "ruled", "stale": []
+  },
+  {
+    "id": 105, "title": "Same day, different people (hard)", "hard": true, "ideal_entries": 2,
+    "steps": [
+      {"text": "Call Sneha on Friday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Call the plumber on Friday.", "expect_stability": "stable", "expect_outcome": "unrelated"}
+    ],
+    "query": null, "current": null, "stale": []
+  },
+  {
+    "id": 106, "title": "Two unrelated ideas stay separate", "hard": false, "ideal_entries": 2,
+    "steps": [
+      {"text": "What if the app showed a daily summary?", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "I want to read more about volcanoes.", "expect_stability": "stable", "expect_outcome": "new"}
+    ],
+    "query": null, "current": null, "stale": []
+  },
+  {
+    "id": 107, "title": "Vague task completed by a later note", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "I need to finish.", "expect_stability": "pending", "expect_outcome": null},
+      {"text": "I need to finish the maths worksheet.", "expect_stability": "absorbed", "expect_outcome": "new"}
+    ],
+    "query": "what do I need to finish?", "current": "maths", "stale": []
+  },
+  {
+    "id": 108, "title": "Time changed with 'instead'", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Call the dentist at 11 today.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Call the dentist at 4 instead.", "expect_stability": "stable", "expect_outcome": "update"}
+    ],
+    "query": "when do I call the dentist?", "current": "4", "stale": ["11"]
+  },
+  {
+    "id": 109, "title": "Same reminder worded differently", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Remember to call Hari on Saturday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Don't forget to call Hari on Saturday.", "expect_stability": "stable", "expect_outcome": "fused"}
+    ],
+    "query": "when do I call Hari?", "current": "saturday", "stale": []
+  },
+  {
+    "id": 110, "title": "Dinner moved with 'change'", "hard": false, "ideal_entries": 1,
+    "steps": [
+      {"text": "Dinner with Mom is on Sunday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Change the dinner with Mom to Saturday.", "expect_stability": "stable", "expect_outcome": "update"}
+    ],
+    "query": "when is dinner with Mom?", "current": "saturday", "stale": ["sunday"]
+  }
+]

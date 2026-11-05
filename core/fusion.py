@@ -3,7 +3,7 @@ import re
 
 from core.database import get_connection
 from core.embeddings import cosine, from_blob, to_blob
-from core.intents import SLOT_NAMES, same_family
+from core.intents import INTENT_FAMILY, SLOT_NAMES, same_family
 
 HIGH = 0.75   # at or above: same knowledge (fuse automatically)
 LOW = 0.50    # below: unrelated (new item); in between: ask the user
@@ -64,6 +64,21 @@ def _attach(conn, kid, frag, vec, slots) -> None:
                  (kid, frag["id"]))
 
 
+def _identity_slot(intent) -> str:
+    """Which detail says *what the item is about*: the person for calls and meetings, else the thing."""
+    return "who" if INTENT_FAMILY.get(intent) == "contact" else "what"
+
+
+def _explicit_change_on_same_subject(conn, frag, old_slots: dict, new_slots: dict) -> bool:
+    """Change wording plus the same person/thing is stronger evidence than similarity alone."""
+    from core.lifecycle import _note_text, has_update_cue   # imported here to avoid a circular import
+    key = _identity_slot(frag["intent"])
+    old_id, new_id = old_slots.get(key), new_slots.get(key)
+    if not (old_id and new_id and _compatible(old_id, new_id)):
+        return False
+    return has_update_cue(_note_text(conn, frag))
+
+
 def fuse_fragment(fragment_id: int) -> dict:
     """Place one stable fragment into the knowledge base."""
     with get_connection() as conn:           # one transaction
@@ -94,9 +109,12 @@ def fuse_fragment(fragment_id: int) -> dict:
 
         score, kid, content = best
         sim = round(score, 3)
+        conflict = _conflicts(content["slots"], slots)
 
-        if score >= HIGH:
-            if _conflicts(content["slots"], slots):
+        # Confident match, or an explicit change about the same person/thing.
+        if score >= HIGH or (conflict and _explicit_change_on_same_subject(
+                conn, frag, content["slots"], slots)):
+            if conflict:
                 return {"decision": "conflict", "knowledge_id": kid, "similarity": sim,
                         "reason": "slot values differ (lifecycle manager decides)"}
             _attach(conn, kid, frag, vec, slots)

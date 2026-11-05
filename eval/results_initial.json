@@ -1,0 +1,693 @@
+[
+  {
+    "id": 1,
+    "title": "Pending note completed by a later note",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Remind me to call Ravi about the demo.",
+        "expect_stability": "pending",
+        "stability": "pending",
+        "stability_ok": true,
+        "expect_outcome": null,
+        "outcome": null,
+        "outcome_ok": null,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Ravi",
+          "what": "demo",
+          "when": null,
+          "where": null
+        },
+        "seconds": 8.5
+      },
+      {
+        "text": "The call with Ravi is on Friday at 5.",
+        "expect_stability": "absorbed",
+        "stability": "absorbed",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": 0.543,
+        "intent": "call_person",
+        "slots": {
+          "who": "Ravi",
+          "what": null,
+          "when": "Friday at 5 PM",
+          "where": null
+        },
+        "seconds": 6.6
+      }
+    ],
+    "query": {
+      "text": "when am I calling Ravi?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 2,
+    "title": "Meeting moved with explicit change wording",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Meet Anita on Wednesday at the library.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Anita",
+          "what": null,
+          "when": "Wednesday",
+          "where": "the library"
+        },
+        "seconds": 6.0
+      },
+      {
+        "text": "Actually, move the meeting with Anita to Thursday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "ask",
+        "outcome_ok": false,
+        "similarity": 0.675,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Anita",
+          "what": null,
+          "when": "Thursday",
+          "where": null
+        },
+        "seconds": 6.3
+      }
+    ],
+    "query": {
+      "text": "when is my meeting with Anita?",
+      "system_current": false,
+      "system_stale": true,
+      "baseline_current": false,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 1
+  },
+  {
+    "id": 3,
+    "title": "Conflicting time without change wording goes to review",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Call Karthik on Monday morning.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Karthik",
+          "what": null,
+          "when": "Monday morning",
+          "where": null
+        },
+        "seconds": 6.1
+      },
+      {
+        "text": "Call Karthik on Wednesday morning.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "contradict",
+        "outcome": "contradict",
+        "outcome_ok": true,
+        "similarity": 0.973,
+        "intent": "call_person",
+        "slots": {
+          "who": "Karthik",
+          "what": null,
+          "when": "Wednesday morning",
+          "where": null
+        },
+        "seconds": 6.7
+      }
+    ],
+    "query": null,
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 1
+  },
+  {
+    "id": 4,
+    "title": "More detailed repeat is a refinement",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Call Meena on Saturday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Meena",
+          "what": null,
+          "when": "Saturday",
+          "where": null
+        },
+        "seconds": 5.4
+      },
+      {
+        "text": "Call Meena on Saturday at 6 in the evening.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "fused",
+        "outcome": "fused",
+        "outcome_ok": true,
+        "similarity": 0.946,
+        "intent": "call_person",
+        "slots": {
+          "who": "Meena",
+          "what": null,
+          "when": "Saturday",
+          "where": null
+        },
+        "seconds": 5.5
+      }
+    ],
+    "query": {
+      "text": "when do I call Meena?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 5,
+    "title": "Two different purchases stay separate",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Buy rice and lentils from the store.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "buy_item",
+        "slots": {
+          "who": null,
+          "what": "rice and lentils",
+          "when": null,
+          "where": "the store"
+        },
+        "seconds": 6.2
+      },
+      {
+        "text": "Buy a new pen for exams.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": 0.217,
+        "intent": "buy_item",
+        "slots": {
+          "who": null,
+          "what": "new pen",
+          "when": null,
+          "where": null
+        },
+        "seconds": 5.4
+      }
+    ],
+    "query": null,
+    "system_entries": 2,
+    "baseline_entries": 2,
+    "ideal_entries": 2,
+    "pending_reviews": 0
+  },
+  {
+    "id": 6,
+    "title": "Vague task completed by a later note",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "I have to complete.",
+        "expect_stability": "pending",
+        "stability": "pending",
+        "stability_ok": true,
+        "expect_outcome": null,
+        "outcome": null,
+        "outcome_ok": null,
+        "similarity": null,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": null,
+          "when": null,
+          "where": null
+        },
+        "seconds": 5.0
+      },
+      {
+        "text": "I have to complete the chemistry assignment.",
+        "expect_stability": "absorbed",
+        "stability": "stable",
+        "stability_ok": false,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "chemistry assignment",
+          "when": null,
+          "where": null
+        },
+        "seconds": 5.2
+      }
+    ],
+    "query": {
+      "text": "what do I have to complete?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": false,
+      "baseline_stale": false
+    },
+    "system_entries": 2,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 7,
+    "title": "Call without a time completed later",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Remind me to call Priya about the report.",
+        "expect_stability": "pending",
+        "stability": "pending",
+        "stability_ok": true,
+        "expect_outcome": null,
+        "outcome": null,
+        "outcome_ok": null,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Priya",
+          "what": "the report",
+          "when": null,
+          "where": null
+        },
+        "seconds": 6.0
+      },
+      {
+        "text": "Call Priya on Wednesday.",
+        "expect_stability": "absorbed",
+        "stability": "absorbed",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": 0.768,
+        "intent": "call_person",
+        "slots": {
+          "who": "Priya",
+          "what": null,
+          "when": "Wednesday",
+          "where": null
+        },
+        "seconds": 5.3
+      }
+    ],
+    "query": {
+      "text": "when do I call Priya?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 8,
+    "title": "Same day, different people (hard)",
+    "hard": true,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Call Ravi on Friday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Ravi",
+          "what": null,
+          "when": "Friday",
+          "where": null
+        },
+        "seconds": 5.7
+      },
+      {
+        "text": "Call Dr. Rao on Friday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "unrelated",
+        "outcome": "ask",
+        "outcome_ok": false,
+        "similarity": 0.546,
+        "intent": "call_person",
+        "slots": {
+          "who": "Dr. Rao",
+          "what": null,
+          "when": "Friday",
+          "where": null
+        },
+        "seconds": 5.5
+      }
+    ],
+    "query": null,
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 2,
+    "pending_reviews": 1
+  },
+  {
+    "id": 9,
+    "title": "Two unrelated ideas stay separate",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "What if we add a leaderboard to the quiz app?",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "record_idea",
+        "slots": {
+          "who": null,
+          "what": "leaderboard",
+          "when": null,
+          "where": null
+        },
+        "seconds": 5.8
+      },
+      {
+        "text": "Maybe I should learn guitar this winter.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": 0.024,
+        "intent": "record_idea",
+        "slots": {
+          "who": null,
+          "what": "learn guitar",
+          "when": null,
+          "where": null
+        },
+        "seconds": 5.6
+      }
+    ],
+    "query": null,
+    "system_entries": 2,
+    "baseline_entries": 2,
+    "ideal_entries": 2,
+    "pending_reviews": 0
+  },
+  {
+    "id": 10,
+    "title": "Time changed with the word 'change'",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Call the electrician at 4pm today.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "the electrician",
+          "what": null,
+          "when": "4pm today",
+          "where": null
+        },
+        "seconds": 6.3
+      },
+      {
+        "text": "Change the electrician call to 6pm.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "update",
+        "outcome_ok": true,
+        "similarity": 0.787,
+        "intent": "call_person",
+        "slots": {
+          "who": "electrician",
+          "what": null,
+          "when": "6pm",
+          "where": null
+        },
+        "seconds": 6.4
+      }
+    ],
+    "query": {
+      "text": "when is the electrician call?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 11,
+    "title": "Task deadline updated",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Submit the physics assignment on Monday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "physics assignment",
+          "when": "Monday",
+          "where": null
+        },
+        "seconds": 6.0
+      },
+      {
+        "text": "Actually, submit the physics assignment on Tuesday instead.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "update",
+        "outcome_ok": true,
+        "similarity": 0.841,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "physics assignment",
+          "when": "Tuesday",
+          "where": null
+        },
+        "seconds": 5.8
+      }
+    ],
+    "query": {
+      "text": "when do I submit the physics assignment?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 12,
+    "title": "Exact duplicate note",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Call Divya on Monday at 3.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Divya",
+          "what": null,
+          "when": "Monday",
+          "where": null
+        },
+        "seconds": 5.0
+      },
+      {
+        "text": "Call Divya on Monday at 3.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "fused",
+        "outcome": "fused",
+        "outcome_ok": true,
+        "similarity": 1.0,
+        "intent": "call_person",
+        "slots": {
+          "who": "Divya",
+          "what": null,
+          "when": "Monday",
+          "where": null
+        },
+        "seconds": 5.7
+      }
+    ],
+    "query": {
+      "text": "when do I call Divya?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 13,
+    "title": "Correction that names no subject (hard)",
+    "hard": true,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Call Ravi on Friday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Ravi",
+          "what": null,
+          "when": "Friday",
+          "where": null
+        },
+        "seconds": 5.8
+      },
+      {
+        "text": "Actually, make it Saturday.",
+        "expect_stability": null,
+        "stability": "pending",
+        "stability_ok": null,
+        "expect_outcome": null,
+        "outcome": null,
+        "outcome_ok": null,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": null,
+          "what": null,
+          "when": "Saturday",
+          "where": null
+        },
+        "seconds": 5.0
+      }
+    ],
+    "query": {
+      "text": "when do I call Ravi?",
+      "system_current": false,
+      "system_stale": true,
+      "baseline_current": false,
+      "baseline_stale": true
+    },
+    "system_entries": 2,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  }
+]

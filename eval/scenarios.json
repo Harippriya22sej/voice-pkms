@@ -1,0 +1,171 @@
+[
+  {
+    "id": 1,
+    "title": "Pending note completed by a later note",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Remind me to call Ravi about the demo.", "expect_stability": "pending", "expect_outcome": null},
+      {"text": "The call with Ravi is on Friday at 5.", "expect_stability": "absorbed", "expect_outcome": "new"}
+    ],
+    "query": "when am I calling Ravi?",
+    "current": "friday",
+    "stale": []
+  },
+  {
+    "id": 2,
+    "title": "Meeting moved with explicit change wording",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Meet Anita on Wednesday at the library.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Actually, move the meeting with Anita to Thursday.", "expect_stability": "stable", "expect_outcome": "update"}
+    ],
+    "query": "when is my meeting with Anita?",
+    "current": "thursday",
+    "stale": ["wednesday"]
+  },
+  {
+    "id": 3,
+    "title": "Conflicting time without change wording goes to review",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Call Karthik on Monday morning.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Call Karthik on Wednesday morning.", "expect_stability": "stable", "expect_outcome": "contradict"}
+    ],
+    "query": null,
+    "current": null,
+    "stale": []
+  },
+  {
+    "id": 4,
+    "title": "More detailed repeat is a refinement",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Call Meena on Saturday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Call Meena on Saturday at 6 in the evening.", "expect_stability": "stable", "expect_outcome": "fused"}
+    ],
+    "query": "when do I call Meena?",
+    "current": "saturday",
+    "stale": []
+  },
+  {
+    "id": 5,
+    "title": "Two different purchases stay separate",
+    "hard": false,
+    "ideal_entries": 2,
+    "steps": [
+      {"text": "Buy rice and lentils from the store.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Buy a new pen for exams.", "expect_stability": "stable", "expect_outcome": "new"}
+    ],
+    "query": null,
+    "current": null,
+    "stale": []
+  },
+  {
+    "id": 6,
+    "title": "Vague task completed by a later note",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "I have to complete.", "expect_stability": "pending", "expect_outcome": null},
+      {"text": "I have to complete the chemistry assignment.", "expect_stability": "absorbed", "expect_outcome": "new"}
+    ],
+    "query": "what do I have to complete?",
+    "current": "chemistry",
+    "stale": []
+  },
+  {
+    "id": 7,
+    "title": "Call without a time completed later",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Remind me to call Priya about the report.", "expect_stability": "pending", "expect_outcome": null},
+      {"text": "Call Priya on Wednesday.", "expect_stability": "absorbed", "expect_outcome": "new"}
+    ],
+    "query": "when do I call Priya?",
+    "current": "wednesday",
+    "stale": []
+  },
+  {
+    "id": 8,
+    "title": "Same day, different people (hard)",
+    "hard": true,
+    "ideal_entries": 2,
+    "steps": [
+      {"text": "Call Ravi on Friday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Call Dr. Rao on Friday.", "expect_stability": "stable", "expect_outcome": "unrelated"}
+    ],
+    "query": null,
+    "current": null,
+    "stale": []
+  },
+  {
+    "id": 9,
+    "title": "Two unrelated ideas stay separate",
+    "hard": false,
+    "ideal_entries": 2,
+    "steps": [
+      {"text": "What if we add a leaderboard to the quiz app?", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Maybe I should learn guitar this winter.", "expect_stability": "stable", "expect_outcome": "new"}
+    ],
+    "query": null,
+    "current": null,
+    "stale": []
+  },
+  {
+    "id": 10,
+    "title": "Time changed with the word 'change'",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Call the electrician at 4pm today.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Change the electrician call to 6pm.", "expect_stability": "stable", "expect_outcome": "update"}
+    ],
+    "query": "when is the electrician call?",
+    "current": "6pm",
+    "stale": ["4pm"]
+  },
+  {
+    "id": 11,
+    "title": "Task deadline updated",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Submit the physics assignment on Monday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Actually, submit the physics assignment on Tuesday instead.", "expect_stability": "stable", "expect_outcome": "update"}
+    ],
+    "query": "when do I submit the physics assignment?",
+    "current": "tuesday",
+    "stale": ["monday"]
+  },
+  {
+    "id": 12,
+    "title": "Exact duplicate note",
+    "hard": false,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Call Divya on Monday at 3.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Call Divya on Monday at 3.", "expect_stability": "stable", "expect_outcome": "fused"}
+    ],
+    "query": "when do I call Divya?",
+    "current": "monday",
+    "stale": []
+  },
+  {
+    "id": 13,
+    "title": "Correction that names no subject (hard)",
+    "hard": true,
+    "ideal_entries": 1,
+    "steps": [
+      {"text": "Call Ravi on Friday.", "expect_stability": "stable", "expect_outcome": "new"},
+      {"text": "Actually, make it Saturday.", "expect_stability": null, "expect_outcome": null}
+    ],
+    "query": "when do I call Ravi?",
+    "current": "saturday",
+    "stale": ["friday"]
+  }
+]

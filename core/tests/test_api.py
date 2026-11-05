@@ -246,3 +246,9 @@ def test_stale_review_rejects_unknown_action(client):
     client.post("/maintenance/stale-check", params={"hours": 24})
     review_id = client.get("/review").json()[0]["id"]
     assert client.post(f"/review/{review_id}/resolve", json={"action": "bogus"}).status_code == 400
+
+def test_ui_page_is_served(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "text/html" in r.headers["content-type"]
+    assert "Voice Knowledge" in r.text

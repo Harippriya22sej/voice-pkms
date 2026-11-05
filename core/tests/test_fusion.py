@@ -124,3 +124,16 @@ def test_related_intents_are_compared():
     fuse_fragment(add_fragment(when="Friday"))
     r = fuse_fragment(add_fragment(vec=V_SIMILAR, intent="schedule_meeting", when="Monday"))
     assert r["decision"] == "conflict"
+
+def test_change_wording_on_same_person_is_a_conflict_below_high_similarity():
+    fuse_fragment(add_fragment(when="Friday"))
+    fid = add_fragment(vec=V_MID, when="Monday")          # similarity 0.6, between LOW and HIGH
+    with database.get_connection() as conn:
+        conn.execute("UPDATE notes SET text = 'Actually, move the call to Monday.' "
+                     "WHERE id = (SELECT note_id FROM fragments WHERE id = ?)", (fid,))
+    assert fuse_fragment(fid)["decision"] == "conflict"
+
+
+def test_without_change_wording_the_middle_zone_still_asks():
+    fuse_fragment(add_fragment(when="Friday"))
+    assert fuse_fragment(add_fragment(vec=V_MID, when="Monday"))["decision"] == "ask"

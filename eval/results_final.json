@@ -1,0 +1,534 @@
+[
+  {
+    "id": 101,
+    "title": "Pending call completed by a later note",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Remind me to phone Lakshmi about the fee.",
+        "expect_stability": "pending",
+        "stability": "pending",
+        "stability_ok": true,
+        "expect_outcome": null,
+        "outcome": null,
+        "outcome_ok": null,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Lakshmi",
+          "what": "phone about the fee",
+          "when": null,
+          "where": null
+        },
+        "seconds": 8.8
+      },
+      {
+        "text": "The call with Lakshmi is on Thursday at 10.",
+        "expect_stability": "absorbed",
+        "stability": "absorbed",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": 0.599,
+        "intent": "call_person",
+        "slots": {
+          "who": "Lakshmi",
+          "what": null,
+          "when": "Thursday at 10",
+          "where": null
+        },
+        "seconds": 5.8
+      }
+    ],
+    "query": {
+      "text": "when do I call Lakshmi?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 102,
+    "title": "Meeting postponed (change wording: postponed)",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Meet Arjun on Monday at the canteen.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Arjun",
+          "what": null,
+          "when": "Monday",
+          "where": "canteen"
+        },
+        "seconds": 5.5
+      },
+      {
+        "text": "The meeting with Arjun is postponed to Wednesday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "update",
+        "outcome_ok": true,
+        "similarity": 0.664,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Arjun",
+          "what": null,
+          "when": "Wednesday",
+          "where": null
+        },
+        "seconds": 4.9
+      }
+    ],
+    "query": {
+      "text": "when do I meet Arjun?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": false,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 103,
+    "title": "Different deadline without change wording goes to review",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Submit the lab record on Tuesday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "submit the lab record",
+          "when": "Tuesday",
+          "where": null
+        },
+        "seconds": 5.0
+      },
+      {
+        "text": "Submit the lab record on Friday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "contradict",
+        "outcome": "contradict",
+        "outcome_ok": true,
+        "similarity": 0.963,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "lab record",
+          "when": "Friday",
+          "where": null
+        },
+        "seconds": 9.7
+      }
+    ],
+    "query": null,
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 1
+  },
+  {
+    "id": 104,
+    "title": "More detailed purchase is a refinement",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Buy a notebook.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "buy_item",
+        "slots": {
+          "who": null,
+          "what": "notebook",
+          "when": null,
+          "where": null
+        },
+        "seconds": 4.2
+      },
+      {
+        "text": "Buy a ruled notebook from the stationery shop.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "fused",
+        "outcome": "ask",
+        "outcome_ok": false,
+        "similarity": 0.697,
+        "intent": "buy_item",
+        "slots": {
+          "who": null,
+          "what": "ruled notebook",
+          "when": null,
+          "where": "stationery shop"
+        },
+        "seconds": 4.7
+      }
+    ],
+    "query": {
+      "text": "what notebook do I buy?",
+      "system_current": false,
+      "system_stale": false,
+      "baseline_current": false,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 1
+  },
+  {
+    "id": 105,
+    "title": "Same day, different people (hard)",
+    "hard": true,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Call Sneha on Friday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Sneha",
+          "what": null,
+          "when": "Friday",
+          "where": null
+        },
+        "seconds": 4.5
+      },
+      {
+        "text": "Call the plumber on Friday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "unrelated",
+        "outcome": "new",
+        "outcome_ok": false,
+        "similarity": 0.334,
+        "intent": "call_person",
+        "slots": {
+          "who": "plumber",
+          "what": null,
+          "when": "Friday",
+          "where": null
+        },
+        "seconds": 4.3
+      }
+    ],
+    "query": null,
+    "system_entries": 2,
+    "baseline_entries": 2,
+    "ideal_entries": 2,
+    "pending_reviews": 0
+  },
+  {
+    "id": 106,
+    "title": "Two unrelated ideas stay separate",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "What if the app showed a daily summary?",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "record_idea",
+        "slots": {
+          "who": null,
+          "what": "Create an app",
+          "when": null,
+          "where": null
+        },
+        "seconds": 4.6
+      },
+      {
+        "text": "I want to read more about volcanoes.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "read about volcanoes",
+          "when": null,
+          "where": null
+        },
+        "seconds": 4.6
+      }
+    ],
+    "query": null,
+    "system_entries": 2,
+    "baseline_entries": 2,
+    "ideal_entries": 2,
+    "pending_reviews": 0
+  },
+  {
+    "id": 107,
+    "title": "Vague task completed by a later note",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "I need to finish.",
+        "expect_stability": "pending",
+        "stability": "pending",
+        "stability_ok": true,
+        "expect_outcome": null,
+        "outcome": null,
+        "outcome_ok": null,
+        "similarity": null,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": null,
+          "when": null,
+          "where": null
+        },
+        "seconds": 4.2
+      },
+      {
+        "text": "I need to finish the maths worksheet.",
+        "expect_stability": "absorbed",
+        "stability": "absorbed",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": 0.524,
+        "intent": "do_task",
+        "slots": {
+          "who": null,
+          "what": "maths worksheet",
+          "when": null,
+          "where": null
+        },
+        "seconds": 4.3
+      }
+    ],
+    "query": {
+      "text": "what do I need to finish?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": false,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 108,
+    "title": "Time changed with 'instead'",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Call the dentist at 11 today.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "the dentist",
+          "what": null,
+          "when": "today at 11",
+          "where": null
+        },
+        "seconds": 4.8
+      },
+      {
+        "text": "Call the dentist at 4 instead.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "update",
+        "outcome_ok": true,
+        "similarity": 0.8,
+        "intent": "call_person",
+        "slots": {
+          "who": "the dentist",
+          "what": null,
+          "when": "4",
+          "where": null
+        },
+        "seconds": 4.5
+      }
+    ],
+    "query": {
+      "text": "when do I call the dentist?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 109,
+    "title": "Same reminder worded differently",
+    "hard": false,
+    "has_stale": false,
+    "steps": [
+      {
+        "text": "Remember to call Hari on Saturday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "call_person",
+        "slots": {
+          "who": "Hari",
+          "what": null,
+          "when": "Saturday",
+          "where": null
+        },
+        "seconds": 4.4
+      },
+      {
+        "text": "Don't forget to call Hari on Saturday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "fused",
+        "outcome": "fused",
+        "outcome_ok": true,
+        "similarity": 0.959,
+        "intent": "call_person",
+        "slots": {
+          "who": "Hari",
+          "what": null,
+          "when": "Saturday",
+          "where": null
+        },
+        "seconds": 4.4
+      }
+    ],
+    "query": {
+      "text": "when do I call Hari?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": true,
+      "baseline_stale": false
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  },
+  {
+    "id": 110,
+    "title": "Dinner moved with 'change'",
+    "hard": false,
+    "has_stale": true,
+    "steps": [
+      {
+        "text": "Dinner with Mom is on Sunday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "new",
+        "outcome": "new",
+        "outcome_ok": true,
+        "similarity": null,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Mom",
+          "what": null,
+          "when": "Sunday",
+          "where": null
+        },
+        "seconds": 4.5
+      },
+      {
+        "text": "Change the dinner with Mom to Saturday.",
+        "expect_stability": "stable",
+        "stability": "stable",
+        "stability_ok": true,
+        "expect_outcome": "update",
+        "outcome": "update",
+        "outcome_ok": true,
+        "similarity": 0.787,
+        "intent": "schedule_meeting",
+        "slots": {
+          "who": "Mom",
+          "what": null,
+          "when": "Saturday",
+          "where": null
+        },
+        "seconds": 4.5
+      }
+    ],
+    "query": {
+      "text": "when is dinner with Mom?",
+      "system_current": true,
+      "system_stale": false,
+      "baseline_current": false,
+      "baseline_stale": true
+    },
+    "system_entries": 1,
+    "baseline_entries": 2,
+    "ideal_entries": 1,
+    "pending_reviews": 0
+  }
+]

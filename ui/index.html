@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice Knowledge</title>
+<style>
+:root{
+  --paper:#F5F6F8; --surface:#FFFFFF; --ink:#1B2437; --muted:#5F6B7E; --line:#DADFE7;
+  --voice:#0E7C86; --voice-soft:#E1F1F2;
+  --pending:#8A5A0B; --pending-bg:#FBF1DC; --pending-rule:#D9A441;
+  --stable:#1F6B45; --stable-bg:#E3F3EA; --stable-rule:#3FA06D;
+  --update:#4A39B5; --update-bg:#ECE8FB; --update-rule:#7A67E0;
+  --conflict:#9E3520; --conflict-bg:#FBE7E2; --conflict-rule:#D9644A;
+  --old:#5F6B7E; --old-bg:#ECEEF2; --old-rule:#AAB2C0;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 var(--sans);color:var(--ink);background:var(--paper);
+  display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+:focus-visible{outline:2px solid var(--voice);outline-offset:2px}
+
+/* navigation rail */
+.rail{background:var(--ink);color:#DCE3F0;padding:24px 16px;display:flex;flex-direction:column;
+  gap:22px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font:600 20px/1.2 var(--serif);color:#fff;padding:0 8px}
+#navlist{display:flex;flex-direction:column;gap:2px}
+.navbtn{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;border-radius:6px;cursor:pointer;color:#C7D0E2}
+.navbtn:hover{background:rgba(255,255,255,.07)}
+.navbtn[aria-current=page]{background:rgba(255,255,255,.12);color:#fff;box-shadow:inset 3px 0 0 #3CC4CF}
+.navbtn:focus-visible{outline:2px solid #3CC4CF;outline-offset:2px}
+.badge{background:#3CC4CF;color:#0B2A2D;border-radius:999px;font-size:12px;font-weight:600;
+  padding:0 8px;min-width:22px;text-align:center}
+.rail-foot{margin-top:auto;font-size:13px;color:#93A0B8;padding:0 8px}
+
+/* page */
+main{padding:40px 48px 80px;max-width:900px;width:100%}
+.pagehead h1{font:600 32px/1.15 var(--serif);margin:0 0 8px}
+.pagehead p{margin:0 0 28px;color:var(--muted);max-width:60ch}
+textarea,input[type=search],select{font:inherit;color:inherit;background:var(--surface);
+  border:1px solid var(--line);border-radius:6px;padding:12px 14px;width:100%}
+select{width:auto;padding:9px 12px}
+textarea{resize:vertical;min-height:110px;font-size:17px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
+.btn{font:inherit;font-weight:600;padding:9px 16px;border-radius:6px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:#B5BECC}
+.btn.primary{background:var(--voice);border-color:var(--voice);color:#fff}
+.btn.primary:hover{background:#0B6870}
+.btn.rec{background:var(--conflict);border-color:var(--conflict);color:#fff}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.muted{color:var(--muted)}
+.error{color:var(--conflict);background:var(--conflict-bg);border-radius:6px;padding:10px 14px}
+.working{color:var(--muted)}
+.empty{padding:24px 4px}
+.empty h2{font:600 20px var(--serif);margin:0 0 6px}
+.empty p{margin:0;color:var(--muted);max-width:56ch}
+.filters{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0 0 18px}
+.check{display:flex;align-items:center;gap:6px;color:var(--muted);cursor:pointer}
+.searchbar{display:flex;gap:10px;margin-bottom:12px}
+.searchbar input{flex:1}
+
+/* rows: the left rule carries status */
+.row{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--rule,var(--line));
+  border-radius:6px;padding:14px 16px;margin:0 0 10px}
+.row.pending{--rule:var(--pending-rule)} .row.active{--rule:var(--voice)}
+.row.old{--rule:var(--old-rule)} .row.conflict{--rule:var(--conflict-rule)}
+.row.update{--rule:var(--update-rule)}
+.row h3{font:600 18px/1.3 var(--serif);margin:0 0 4px}
+.rowhead{all:unset;display:block;width:100%;cursor:pointer}
+.rowhead:focus-visible{outline:2px solid var(--voice);outline-offset:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{font-size:12.5px;padding:1px 9px;border-radius:999px;background:var(--old-bg);color:var(--old)}
+.chip.pending{background:var(--pending-bg);color:var(--pending)}
+.chip.stable{background:var(--stable-bg);color:var(--stable)}
+.chip.update{background:var(--update-bg);color:var(--update)}
+.chip.conflict{background:var(--conflict-bg);color:var(--conflict)}
+dl.slots{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:8px 0 0;font-size:15px}
+dl.slots dt{color:var(--muted)} dl.slots dd{margin:0}
+.detail{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.detail h4{margin:12px 0 6px;font-size:14px;color:var(--muted)}
+.versions{list-style:none;margin:0;padding:0}
+.versions li{position:relative;padding:0 0 14px 22px}
+.versions li::before{content:"";position:absolute;left:5px;top:18px;bottom:0;width:2px;background:var(--line)}
+.versions li:last-child::before{display:none}
+.versions li::after{content:"";position:absolute;left:0;top:6px;width:12px;height:12px;border-radius:50%;
+  background:var(--old-rule)}
+.versions li.cur::after{background:var(--voice)}
+.sources{margin:0;padding-left:18px;font-size:15px}
+.scorebar{height:4px;border-radius:2px;background:var(--line);margin-top:10px}
+.scorebar span{display:block;height:100%;background:var(--voice);border-radius:2px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px 0}
+.compare h4{margin:0 0 4px;font-size:14px;color:var(--muted)}
+.compare p{margin:0 0 4px}
+
+/* capture result: the step trail */
+.result{margin-top:28px}
+.headline{font:600 26px/1.25 var(--serif);margin:0 0 4px}
+.transcript{margin:14px 0 0;padding:8px 14px;border-left:3px solid var(--voice);
+  background:var(--voice-soft);border-radius:0 6px 6px 0}
+.trace{margin:22px 0 10px}
+.stop{position:relative;padding:0 0 18px 30px;animation:reveal .4s both;animation-delay:calc(var(--i,0) * .2s)}
+.stop::before{content:"";position:absolute;left:6px;top:22px;bottom:0;width:2px;background:var(--line)}
+.stop:last-child::before{display:none}
+.stop .dot{position:absolute;left:0;top:5px;width:14px;height:14px;border-radius:50%;background:var(--rule)}
+.stop h3{margin:0;font-size:14px;color:var(--muted);font-weight:600}
+.stop p{margin:2px 0 0}
+.stop.stable{--rule:var(--stable-rule)} .stop.pending{--rule:var(--pending-rule)}
+.stop.update{--rule:var(--update-rule)} .stop.conflict{--rule:var(--conflict-rule)}
+.stop.old{--rule:var(--old-rule)}
+@keyframes reveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.stop{animation:none}}
+
+#toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:10}
+.toast{background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px;max-width:360px}
+.toast.error{background:var(--conflict)}
+
+@media (max-width:780px){
+  body{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px}
+  #navlist{flex-direction:row;flex-wrap:wrap}
+  .rail-foot{display:none}
+  main{padding:24px 18px 60px}
+  .compare{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<nav class="rail" aria-label="Main">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" fill="#3CC4CF">
+      <rect x="2" y="10" width="3" height="6" rx="1.5"/><rect x="7" y="5" width="3" height="16" rx="1.5"/>
+      <rect x="12" y="1" width="3" height="24" rx="1.5"/><rect x="17" y="7" width="3" height="12" rx="1.5"/>
+      <rect x="22" y="10" width="3" height="6" rx="1.5"/>
+    </svg>
+    <span>Voice Knowledge</span>
+  </div>
+  <div id="navlist"></div>
+  <div class="rail-foot" id="railFoot"></div>
+</nav>
+<main id="main" tabindex="-1"></main>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+const CATS = ["task", "reminder", "idea", "journal"];
+const SLOT_LABEL = {who: "Who", what: "What", when: "When", where: "Where"};
+const $ = (s) => document.querySelector(s);
+
+/* Safe element builder: text is always inserted as text, never as HTML. */
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : "");
+const nice = (s) => String(s || "").replace(/_/g, " ");
+const chip = (text, kind) => h("span", {class: "chip " + (kind || "")}, text);
+const empty = (title, text) => h("div", {class: "empty"}, h("h2", {}, title), h("p", {}, text));
+const pageHead = (title, sub) => h("header", {class: "pagehead"}, h("h1", {}, title), h("p", {}, sub));
+function fmtDate(s) {
+  const d = new Date(String(s).replace(" ", "T") + "Z");
+  return isNaN(d) ? String(s) : d.toLocaleString([], {dateStyle: "medium", timeStyle: "short"});
+}
+function slotsView(slots) {
+  const entries = Object.entries(slots || {}).filter(([, v]) => v);
+  if (!entries.length) return h("p", {class: "muted"}, "No details extracted.");
+  return h("dl", {class: "slots"}, entries.map(([k, v]) => [h("dt", {}, SLOT_LABEL[k] || k), h("dd", {}, v)]));
+}
+function changesText(changes) {
+  return Object.entries(changes || {}).map(([k, c]) => `${SLOT_LABEL[k] || k}: ${c.from} → ${c.to}`).join(", ");
+}
+
+/* network */
+async function api(path, opts) {
+  let res;
+  try { res = await fetch(path, opts); }
+  catch (e) { throw new Error("Cannot reach the app. Check that the server is still running."); }
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* no body */ }
+  if (!res.ok) {
+    let msg = data && data.detail ? data.detail : `Request failed (${res.status}).`;
+    if (typeof msg !== "string") msg = "Check your input and try again.";
+    throw new Error(msg);
+  }
+  return data;
+}
+const post = (p, body) => api(p, {method: "POST", headers: {"Content-Type": "application/json"},
+                                   body: JSON.stringify(body)});
+function toast(msg, kind) {
+  const t = h("div", {class: "toast " + (kind || "")}, msg);
+  $("#toasts").append(t);
+  setTimeout(() => t.remove(), 4500);
+}
+
+/* navigation */
+const VIEWS = [
+  {id: "capture", label: "Capture", render: viewCapture},
+  {id: "pending", label: "Pending", render: viewPending, badge: "pending_fragments"},
+  {id: "knowledge", label: "Knowledge", render: viewKnowledge},
+  {id: "search", label: "Search", render: viewSearch},
+  {id: "review", label: "Review", render: viewReview, badge: "pending_reviews"},
+];
+let current = "capture", stats = null;
+
+function buildNav() {
+  const list = $("#navlist");
+  list.replaceChildren();
+  for (const v of VIEWS) {
+    const count = v.badge && stats ? stats[v.badge] : 0;
+    list.append(h("button", {class: "navbtn", "aria-current": v.id === current ? "page" : null,
+                             onclick: () => go(v.id)}, v.label, count > 0 ? h("span", {class: "badge"}, count) : null));
+  }
+  $("#railFoot").textContent = stats ? `${stats.notes} notes, ${stats.active_knowledge} active items` : "";
+}
+async function refreshStats() {
+  try { stats = await api("/stats"); } catch (e) { /* the views report their own errors */ }
+  buildNav();
+}
+function go(id) {
+  current = id;
+  if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+  buildNav();
+  const main = $("#main");
+  main.replaceChildren();
+  VIEWS.find((v) => v.id === id).render(main);
+}
+
+/* Capture */
+let recorder = null, recChunks = [], recStream = null;
+function extFor(type) {
+  if (type.includes("ogg")) return "ogg";
+  if (type.includes("mp4")) return "m4a";
+  if (type.includes("wav")) return "wav";
+  return "webm";
+}
+async function toggleRecord(btn, onDone) {
+  if (recorder && recorder.state === "recording") { recorder.stop(); return; }
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    toast("Recording is not supported in this browser. Upload an audio file instead.", "error"); return;
+  }
+  try { recStream = await navigator.mediaDevices.getUserMedia({audio: true}); }
+  catch (e) { toast("Microphone access was blocked. Allow it in the browser, or upload an audio file.", "error"); return; }
+  recChunks = [];
+  recorder = new MediaRecorder(recStream);
+  recorder.ondataavailable = (e) => { if (e.data.size) recChunks.push(e.data); };
+  recorder.onstop = () => {
+    recStream.getTracks().forEach((t) => t.stop());
+    const type = recorder.mimeType || "audio/webm";
+    btn.classList.remove("rec");
+    btn.textContent = "Record";
+    onDone(new Blob(recChunks, {type}), "recording." + extFor(type));
+  };
+  recorder.start();
+  btn.classList.add("rec");
+  btn.textContent = "Stop recording";
+}
+function sendAudio(blob, name) {
+  const fd = new FormData();
+  fd.append("file", blob, name);
+  return api("/notes/voice", {method: "POST", body: fd});
+}
+
+function viewCapture(main) {
+  main.append(pageHead("Capture a note",
+    "Type or speak. The system checks whether the note is complete, finds related notes, and keeps what you know up to date."));
+  const ta = h("textarea", {maxlength: 5000, placeholder: "Remind me to call Ravi about the demo.", "aria-label": "Note text"});
+  const out = h("div", {class: "result", "aria-live": "polite"});
+  const saveBtn = h("button", {class: "btn primary", type: "button"}, "Save note");
+  const recBtn = h("button", {class: "btn", type: "button"}, "Record");
+  const file = h("input", {type: "file", accept: "audio/*,.m4a,.wav,.mp3,.webm,.ogg,.flac", hidden: true});
+  const upBtn = h("button", {class: "btn", type: "button", onclick: () => file.click()}, "Upload audio");
+  const controls = [saveBtn, recBtn, upBtn];
+
+  async function run(task) {
+    controls.forEach((b) => (b.disabled = true));
+    out.replaceChildren(h("p", {class: "working"},
+      "Working on your note. The first one can take up to 30 seconds while the models load."));
+    try {
+      out.replaceChildren(renderResult(await task()));
+      refreshStats();
+      return true;
+    } catch (e) {
+      out.replaceChildren(h("p", {class: "error"}, e.message));
+      return false;
+    } finally {
+      controls.forEach((b) => (b.disabled = false));
+    }
+  }
+  async function saveText() {
+    const text = ta.value.trim();
+    if (!text) { toast("Type a note first.", "error"); ta.focus(); return; }
+    if (await run(() => post("/notes/text", {text}))) ta.value = "";
+  }
+  saveBtn.onclick = saveText;
+  ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveText(); });
+  recBtn.onclick = () => toggleRecord(recBtn, (blob, name) => run(() => sendAudio(blob, name)));
+  file.onchange = () => { const f = file.files[0]; file.value = ""; if (f) run(() => sendAudio(f, f.name)); };
+
+  main.append(
+    h("div", {}, ta, h("div", {class: "actions"}, saveBtn, recBtn, upBtn, file)),
+    h("p", {class: "hint"}, "Press Ctrl+Enter to save. Everything is processed on this computer."),
+    out);
+  ta.focus();
+}
+
+function describeStability(r) {
+  if (r.stability === "pending") {
+    if (r.reason === "analysis_failed")
+      return {kind: "conflict", text: "The note could not be analysed, so it is held as pending. Check that Ollama is running, or confirm it by hand in Pending."};
+    return {kind: "pending", text: "Held as pending. Still needed: " + String(r.reason).replace("missing:", "").trim() + "."};
+  }
+  if (r.stability === "absorbed") {
+    const done = r.target_stability === "stable";
+    return {kind: done ? "stable" : "pending",
+      text: `This note added detail to an earlier pending note (#${r.merged_into}, similarity ${r.similarity}). ` +
+            (done ? "That note is now complete." : "It still needs more detail.")};
+  }
+  return {kind: "stable", text: "Complete. Every required detail is present."};
+}
+function describeFusion(f) {
+  const sim = f.similarity != null ? ` (similarity ${f.similarity})` : "";
+  if (f.decision === "new") return {kind: "stable", text: `Saved as new knowledge (#${f.knowledge_id}).`};
+  if (f.decision === "fused") return {kind: "stable", text: `Merged into existing knowledge #${f.knowledge_id}${sim}.`};
+  if (f.decision === "conflict") return {kind: "pending", text: `Matches knowledge #${f.knowledge_id}${sim}, but a detail is different.`};
+  if (f.decision === "ask") return {kind: "pending", text: `Might belong with knowledge #${f.knowledge_id}${sim}. Added to Review so you can decide.`};
+  return {kind: "old", text: f.reason || "Nothing to do."};
+}
+function describeLifecycle(l) {
+  const changes = changesText(l.changes);
+  if (l.label === "UPDATE") return {kind: "update", text: `Updated to version ${l.version}. ${changes}. The earlier version stays in history.`};
+  if (l.label === "SUPPORT") return {kind: "stable", text: "Confirms what you already saved. The details were merged."};
+  if (l.label === "CONTRADICT") return {kind: "conflict", text: `Disagrees with what you saved (${changes}). Nothing was changed. Decide in Review.`};
+  if (l.label === "UNRELATED") return {kind: "stable", text: "Judged to be a different item, so it was saved separately."};
+  return {kind: "old", text: l.reason || "Nothing to do."};
+}
+function headline(r) {
+  const l = r.lifecycle, f = r.fusion;
+  if (l && l.label === "UPDATE") return "Saved. Your earlier note was updated.";
+  if (l && l.label === "CONTRADICT") return "Saved. This disagrees with an earlier note.";
+  if (f && f.decision === "ask") return "Saved. One question for you.";
+  if (f && f.decision === "fused") return "Saved. Added to existing knowledge.";
+  if (r.stability === "absorbed") return r.target_stability === "stable" ? "Saved. It completed an earlier note." : "Saved. Still waiting for detail.";
+  if (r.stability === "pending") return "Saved. Waiting for one more detail.";
+  return "Saved to your knowledge.";
+}
+function renderResult(r) {
+  const stops = [["Completeness", describeStability(r)]];
+  if (r.fusion) stops.push(["Placement", describeFusion(r.fusion)]);
+  if (r.lifecycle) stops.push(["Check against saved knowledge", describeLifecycle(r.lifecycle)]);
+
+  let nextView = "knowledge", nextLabel = "See it in Knowledge";
+  if ((r.lifecycle && r.lifecycle.label === "CONTRADICT") || (r.fusion && r.fusion.decision === "ask")) {
+    nextView = "review"; nextLabel = "Answer in Review";
+  } else if (r.stability === "pending" || (r.stability === "absorbed" && r.target_stability !== "stable")) {
+    nextView = "pending"; nextLabel = "See it in Pending";
+  }
+  return h("section", {},
+    h("h2", {class: "headline"}, headline(r)),
+    r.transcript ? h("blockquote", {class: "transcript"}, "Heard: " + r.transcript) : null,
+    h("div", {class: "trace"}, stops.map(([title, d], i) =>
+      h("div", {class: "stop " + d.kind, style: "--i:" + i}, h("span", {class: "dot"}), h("h3", {}, title), h("p", {}, d.text)))),
+    h("button", {class: "btn", type: "button", onclick: () => go(nextView)}, nextLabel));
+}
+
+/* Pending */
+async function viewPending(main) {
+  main.append(pageHead("Pending",
+    "Notes that miss a required detail wait here. Say the missing detail in a new note and it completes by itself, or confirm the note as it is."));
+  const box = h("div");
+  main.append(box);
+  async function load() {
+    try {
+      const items = await api("/pending");
+      box.replaceChildren(...(items.length ? items.map(card) :
+        [empty("Nothing is waiting.", "Notes that miss a detail, like a time or a person, appear here.")]));
+    } catch (e) { box.replaceChildren(h("p", {class: "error"}, e.message)); }
+  }
+  function card(it) {
+    const btn = h("button", {class: "btn", type: "button"}, "Confirm as it is");
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        const r = await api(`/pending/${it.id}/confirm`, {method: "POST"});
+        const conflict = r.lifecycle && r.lifecycle.label === "CONTRADICT";
+        toast(conflict ? "Confirmed. It disagrees with saved knowledge, so check Review." : "Confirmed and added to your knowledge.");
+        await refreshStats(); load();
+      } catch (e) { toast(e.message, "error"); btn.disabled = false; }
+    };
+    return h("div", {class: "row pending"},
+      h("h3", {}, it.text),
+      h("div", {class: "chips"}, chip(cap(it.category)), chip(cap(nice(it.intent))),
+        it.missing.map((m) => chip("Needs " + (SLOT_LABEL[m] || m).toLowerCase(), "pending")),
+        h("span", {class: "muted"}, fmtDate(it.created_at))),
+      slotsView(it.slots), h("div", {class: "actions"}, btn));
+  }
+  load();
+}
+
+/* Knowledge */
+function renderDetail(d) {
+  const wrap = h("div", {class: "detail"});
+  const ol = h("ol", {class: "versions"});
+  for (const v of d.history) {
+    const cur = v.status === "active";
+    const ch = v.content && v.content.changes ? changesText(v.content.changes) : "";
+    ol.append(h("li", {class: cur ? "cur" : ""},
+      h("strong", {}, "Version " + v.version), " ", chip(cur ? "Current" : "Earlier", cur ? "stable" : "old"),
+      ch ? h("div", {class: "muted"}, "Changed " + ch) : null, slotsView(v.content.slots)));
+  }
+  wrap.append(h("h4", {}, "Versions"), ol, h("h4", {}, "Notes this version came from"),
+    h("ul", {class: "sources"}, d.sources.map((s) => h("li", {}, `“${s.text}” `, h("span", {class: "muted"}, fmtDate(s.created_at))))));
+  return wrap;
+}
+function knowledgeRow(it) {
+  const detail = h("div", {hidden: true});
+  let loaded = false;
+  const head = h("button", {class: "rowhead", "aria-expanded": "false", type: "button"},
+    h("h3", {}, it.title),
+    h("div", {class: "chips"}, chip(cap(it.category)),
+      it.version > 1 ? chip("Version " + it.version, "update") : null,
+      it.status === "superseded" ? chip("Earlier version", "old") : null),
+    slotsView(it.content.slots));
+  head.addEventListener("click", async () => {
+    const open = detail.hidden;
+    detail.hidden = !open;
+    head.setAttribute("aria-expanded", String(open));
+    if (open && !loaded) {
+      detail.replaceChildren(h("p", {class: "working"}, "Loading…"));
+      try { detail.replaceChildren(renderDetail(await api("/knowledge/" + it.id))); loaded = true; }
+      catch (e) { detail.replaceChildren(h("p", {class: "error"}, e.message)); }
+    }
+  });
+  return h("div", {class: "row " + (it.status === "active" ? "active" : "old")}, head, detail);
+}
+function viewKnowledge(main) {
+  main.append(pageHead("Knowledge", "What the system currently knows. Open an item to see its versions and the notes it came from."));
+  const cat = h("select", {"aria-label": "Category"}, h("option", {value: ""}, "All categories"),
+    CATS.map((c) => h("option", {value: c}, cap(c))));
+  const old = h("input", {type: "checkbox"});
+  const list = h("div");
+  async function load() {
+    const q = new URLSearchParams({status: old.checked ? "all" : "active", limit: "100"});
+    if (cat.value) q.set("category", cat.value);
+    try {
+      const items = await api("/knowledge?" + q);
+      list.replaceChildren(...(items.length ? items.map(knowledgeRow) :
+        [empty("Nothing here yet.", "Save a complete note in Capture and it appears here.")]));
+    } catch (e) { list.replaceChildren(h("p", {class: "error"}, e.message)); }
+  }
+  cat.onchange = load; old.onchange = load;
+  main.append(h("div", {class: "filters"}, cat, h("label", {class: "check"}, old, " Include earlier versions")), list);
+  load();
+}
+
+/* Search */
+function viewSearch(main) {
+  main.append(pageHead("Search", "Ask in your own words. Results match on meaning and on keywords, and show the current version."));
+  const q = h("input", {type: "search", placeholder: "When am I speaking to Ravi?", "aria-label": "Search your knowledge"});
+  const old = h("input", {type: "checkbox"});
+  const btn = h("button", {class: "btn primary", type: "button"}, "Search");
+  const out = h("div");
+  function resultRow(it) {
+    return h("div", {class: "row " + (it.status === "active" ? "active" : "old")},
+      h("h3", {}, it.title),
+      h("div", {class: "chips"}, chip(cap(it.category)), it.version > 1 ? chip("Version " + it.version, "update") : null,
+        it.status === "superseded" ? chip("Earlier version", "old") : null),
+      slotsView(it.slots),
+      h("div", {class: "scorebar", "aria-hidden": "true"}, h("span", {style: `width:${Math.min(100, Math.round(it.score * 100))}%`})),
+      h("p", {class: "hint"}, `Meaning ${it.semantic.toFixed(2)}, keywords ${it.keyword.toFixed(2)}, overall ${it.score.toFixed(2)}`));
+  }
+  async function run() {
+    const text = q.value.trim();
+    if (!text) { q.focus(); return; }
+    btn.disabled = true;
+    out.replaceChildren(h("p", {class: "working"}, "Searching…"));
+    try {
+      const params = new URLSearchParams({q: text, limit: "8"});
+      if (old.checked) params.set("include_old", "true");
+      const items = await api("/search?" + params);
+      out.replaceChildren(...(items.length ? items.map(resultRow) :
+        [empty("No match.", "Try different words. Incomplete notes are in Pending and are not searchable until they are complete.")]));
+    } catch (e) { out.replaceChildren(h("p", {class: "error"}, e.message)); }
+    finally { btn.disabled = false; }
+  }
+  btn.onclick = run;
+  q.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+  main.append(h("div", {class: "searchbar"}, q, btn),
+    h("label", {class: "check"}, old, " Include earlier versions"), h("div", {style: "height:16px"}), out);
+  q.focus();
+}
+
+/* Review */
+function viewReview(main) {
+  main.append(pageHead("Review", "Questions the system could not settle by itself. Nothing changes until you answer."));
+  const box = h("div");
+  main.append(box);
+  async function load() {
+    try {
+      const items = await api("/review");
+      box.replaceChildren(...(items.length ? items.map(card) :
+        [empty("No questions.", "When a new note disagrees with something you saved, it waits here for your decision.")]));
+    } catch (e) { box.replaceChildren(h("p", {class: "error"}, e.message)); }
+  }
+  function actions(it, defs) {
+    const btns = defs.map(([label, action, cls]) => h("button", {class: "btn " + (cls || ""), type: "button", "data-action": action}, label));
+    btns.forEach((b) => (b.onclick = async () => {
+      btns.forEach((x) => (x.disabled = true));
+      try {
+        await post(`/review/${it.id}/resolve`, {action: b.dataset.action});
+        toast("Your decision was saved.");
+        await refreshStats(); load();
+      } catch (e) { toast(e.message, "error"); btns.forEach((x) => (x.disabled = false)); }
+    }));
+    return h("div", {class: "actions"}, btns);
+  }
+  function side(title, text, slots) { return h("div", {}, h("h4", {}, title), text ? h("p", {}, text) : null, slotsView(slots)); }
+  function card(it) {
+    const c = it.context || {}, p = it.payload || {};
+    const ex = c.existing;
+    const saved = ex ? side(`Saved (version ${ex.version})`, ex.title, ex.slots) : null;
+    const incoming = side("New note", c.new_note, c.new_slots);
+    if (it.type === "contradict") {
+      return h("div", {class: "row conflict"}, h("h3", {}, "A new note disagrees with what you saved"),
+        h("p", {class: "muted"}, "Changed: " + changesText(p.changes)), h("div", {class: "compare"}, saved, incoming),
+        actions(it, [["Use the new value", "update", "primary"], ["Keep the old value", "keep_old"], ["Keep both", "separate"]]));
+    }
+    if (it.type === "fuse") {
+      return h("div", {class: "row pending"}, h("h3", {}, "Do these notes belong together?"),
+        h("p", {class: "muted"}, "Similarity " + p.similarity), h("div", {class: "compare"}, saved, incoming),
+        actions(it, [["Merge them", "accept", "primary"], ["Keep separate", "reject"]]));
+    }
+    return h("div", {class: "row pending"}, h("h3", {}, "This note has been waiting for details"),
+      h("p", {class: "muted"}, "Still needed: " + ((p.missing || []).map((m) => SLOT_LABEL[m] || m).join(", ") || "nothing specific")),
+      h("div", {class: "compare"}, incoming), actions(it, [["Confirm as it is", "confirm", "primary"], ["Keep waiting", "keep_waiting"]]));
+  }
+  load();
+}
+
+const start = location.hash.slice(1);
+current = VIEWS.some((v) => v.id === start) ? start : "capture";
+refreshStats().then(() => go(current));
+</script>
+</body>
+</html>
